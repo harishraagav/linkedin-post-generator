@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Post Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .linkedin-post {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex justify-center items-center min-h-screen">
+    <div class="container mx-auto p-6 max-w-4xl bg-white rounded-xl shadow-lg flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
+        <!-- Input Form Section -->
+        <div class="flex-1">
+            <h1 class="text-3xl font-bold mb-4 text-gray-800">LinkedIn Post Generator</h1>
+            <p class="mb-6 text-gray-600">Enter your achievement or learning below and I'll draft a professional post for you.</p>
+
+            <form id="postForm" class="flex flex-col space-y-4">
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Your Achievement/Learning:</label>
+                    <textarea id="description" name="description" rows="8" class="w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-blue-500 focus:ring-blue-500 transition duration-300" placeholder="e.g., I just completed the Google Project Management Professional Certificate. It was an incredible learning experience!"></textarea>
+                </div>
+                <div>
+                    <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Add Files (Optional):</label>
+                    <input type="file" id="fileInput" name="files" multiple class="w-full text-gray-700 p-2 rounded-md border border-gray-300 bg-gray-50 hover:bg-gray-100 transition duration-300 cursor-pointer">
+                </div>
+                <button type="submit" id="generateButton" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold text-lg hover:bg-blue-700 transition duration-300 shadow-md">Generate Post</button>
+            </form>
+        </div>
+
+        <!-- Output and Preview Section -->
+        <div class="flex-1 mt-6 lg:mt-0">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Post Preview</h2>
+            <div id="loading" class="hidden text-center text-gray-500">
+                <p class="animate-pulse-slow">Generating your post...</p>
+                <p>Simulating deep research and LLM processing.</p>
+            </div>
+            
+            <div id="previewContainer" class="hidden">
+                <div class="linkedin-post space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <img class="w-12 h-12 rounded-full" src="https://placehold.co/48x48/5984C1/ffffff?text=U" alt="User Profile Image">
+                        <div>
+                            <p class="font-bold text-gray-900">Your Name (You)</p>
+                            <p class="text-xs text-gray-500">Just now • Edited • <i class="fas fa-globe-americas"></i></p>
+                        </div>
+                    </div>
+                    <div id="postContent" class="post-content text-gray-800 leading-relaxed">
+                        <!-- Post content will be inserted here by JavaScript -->
+                    </div>
+                    <div class="text-gray-500 text-sm flex space-x-4 mt-2">
+                        <div class="flex items-center space-x-1">
+                            <span>👍</span>
+                            <span>0</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span>💬</span>
+                            <span>0</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span>Reposts</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                    <button id="copyButton" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-700 transition duration-300 shadow-md">
+                        Copy to Clipboard
+                    </button>
+                    <button id="refineButton" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-600 transition duration-300 shadow-md">
+                        Request Refinements
+                    </button>
+                </div>
+
+                <div id="messageBox" class="mt-4 p-3 rounded-md text-sm text-center font-medium transition-all duration-300 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('postForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const description = document.getElementById('description').value;
+            const files = document.getElementById('fileInput').files;
+            
+            const loading = document.getElementById('loading');
+            const previewContainer = document.getElementById('previewContainer');
+            const postContent = document.getElementById('postContent');
+            const messageBox = document.getElementById('messageBox');
+            
+            if (description.trim() === '' && files.length === 0) {
+                showMessage("Please provide a description or add a file to generate a post.", "bg-red-200 text-red-800");
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            previewContainer.classList.add('hidden');
+            messageBox.classList.add('hidden');
+
+            // IMPORTANT: Replace this with your actual Make.com webhook URL
+            const webhookUrl = 'YOUR_MAKE.COM_WEBHOOK_URL_HERE';
+
+            // Create a FormData object to send both text and files
+            const formData = new FormData();
+            formData.append('description', description);
+            for (const file of files) {
+                formData.append('files', file);
+            }
+            
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData // FormData automatically sets the 'Content-Type' header
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    // Assuming Make.com returns the generated post in a 'post' field
+                    const generatedPost = result.post;
+                    if (generatedPost) {
+                        postContent.textContent = generatedPost;
+                        previewContainer.classList.remove('hidden');
+                    } else {
+                        showMessage("Could not generate post. The webhook response was missing the post.", "bg-red-200 text-red-800");
+                    }
+                } else {
+                    showMessage(`Error communicating with Make.com webhook: ${response.status} ${response.statusText}`, "bg-red-200 text-red-800");
+                }
+            } catch (error) {
+                showMessage(`An error occurred: ${error.message}`, "bg-red-200 text-red-800");
+            } finally {
+                loading.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const postContent = document.getElementById('postContent').textContent;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = postContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            showMessage("Post copied to clipboard!", "bg-green-200 text-green-800");
+        });
+
+        document.getElementById('refineButton').addEventListener('click', function() {
+            showMessage("Refinement functionality will be added in a future version!", "bg-yellow-200 text-yellow-800");
+        });
+        
+        function showMessage(message, colorClass) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = `mt-4 p-3 rounded-md text-sm text-center font-medium transition-all duration-300 ${colorClass}`;
+            messageBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
